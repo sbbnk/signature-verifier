@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+/**
+ * Created by ikonovalov on 22/06/17.
+ */
+'use strict';
+require('colors');
+
+const
+    commandLineArgs = require('command-line-args'),
+    cliOptions = require('../src/cli-options');
+
+const
+    optionDefinitions = cliOptions.definitions,
+    options = commandLineArgs(optionDefinitions);
+
+//=========================================================
+// print version only
+if (options.version) {
+    output.printVersionAndExit();
+}
+
+// print help only
+if (options.help) {
+    output.printHelpAndExit();
+}
+
+// Check parameters
+cliOptions.checkMandatoryOptions(options);
