@@ -11,7 +11,8 @@ const
     cliOptions = require('../src/cli-options'),
     fs = require('fs'),
     async = require('async'),
-    path = require('path');
+    path = require('path'),
+    cryptoTool = require('../src/cryptoTool');
 
 const
     optionDefinitions = cliOptions.definitions,
@@ -39,6 +40,7 @@ console.log(`Tag path ${tagPath}`);
 console.log(`Encrypted file path ${encryptedFilePath}`);
 console.log(`Public key path ${publicKeyPath}`);
 
+
 async.series(
     [
         (callback) => fs.readFile(tagPath, callback),
@@ -46,9 +48,19 @@ async.series(
     ],
     (error, result) => {
         if (error) { console.log(error); process.exit(1)}
-        let tag = result[0].toString();
+        let tag = JSON.parse(result[0].toString());
         let publicKeyHex = result[1].toString();
-        console.log(tag);
-        console.log(publicKeyHex);
+
+        console.log(`Tag:\n${JSON.stringify(tag, null, 2)}`);
+        console.log(`Public key: [${publicKeyHex}]`)
+
+        var encryptedStream = fs.createReadStream(encryptedFilePath);
+        let decryptedStream = fs.createWriteStream('/tmp/dec.jpeg');
+        cryptoTool.decryptStream(
+            encryptedStream, decryptedStream,
+            Buffer.from(tag.secret, 'hex'), {algorithm: tag.algorithm, iv:  Buffer.from(tag.iv, 'hex')}, () => {
+            console.log('Done');
+        });
+
     });
 
