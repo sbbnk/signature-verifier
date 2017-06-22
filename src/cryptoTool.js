@@ -3,6 +3,15 @@
  */
 
 const crypto = require('crypto');
+const multihash = require('multihashes');
+
+const EC = require('elliptic').ec;
+const ELLIPTIC_CURVE = 'secp256k1';
+const ec = new EC(ELLIPTIC_CURVE);
+
+const buf2arr = (buf) => {
+    return Buffer.isBuffer(buf) ? buf.toJSON().data : buf;
+};
 
 class Crypto {
 
@@ -26,6 +35,32 @@ class Crypto {
                 callback()
             }
         });
+    }
+
+    verifyByTag(tag, providedPublicKey, callback) {
+        return new Promise((resolve, reject) => {
+            try {
+                let signature = {
+                    r: new BN(tag.signature.r, 16),
+                    s: new BN(tag.signature.s, 16),
+                    recoveryParam: tag.signature.v
+                };
+                let hashArray = buf2arr(multihash.fromB58String(tag.ipfs));
+                let truncatedQmHash = hashArray.slice(2);
+
+                let signatureValidation = this.verify(signature, truncatedQmHash, providedPublicKey);
+
+                callback(null, signatureValidation);
+
+            } catch (e) {
+                callback(e, null);
+            }
+        })
+    }
+
+    verify(signature, message, pub) {
+        const key = ec.keyFromPublic(pub);
+        return key.verify(message, signature);
     }
 }
 
