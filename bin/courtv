@@ -5,9 +5,13 @@
 'use strict';
 require('colors');
 
+
 const
     commandLineArgs = require('command-line-args'),
-    cliOptions = require('../src/cli-options');
+    cliOptions = require('../src/cli-options'),
+    fs = require('fs'),
+    async = require('async'),
+    path = require('path');
 
 const
     optionDefinitions = cliOptions.definitions,
@@ -26,3 +30,25 @@ if (options.help) {
 
 // Check parameters
 cliOptions.checkMandatoryOptions(options);
+
+let tagPath = path.resolve(options.tag);
+let encryptedFilePath = path.resolve(options.file);
+let publicKeyPath = path.resolve(options.public);
+
+console.log(`Tag path ${tagPath}`);
+console.log(`Encrypted file path ${encryptedFilePath}`);
+console.log(`Public key path ${publicKeyPath}`);
+
+async.series(
+    [
+        (callback) => fs.readFile(tagPath, callback),
+        (callback) => fs.readFile(publicKeyPath, callback)
+    ],
+    (error, result) => {
+        if (error) { console.log(error); process.exit(1)}
+        let tag = result[0].toString();
+        let publicKeyHex = result[1].toString();
+        console.log(tag);
+        console.log(publicKeyHex);
+    });
+

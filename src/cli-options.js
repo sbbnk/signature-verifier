@@ -40,7 +40,18 @@ module.exports = {
     ],
 
     checkMandatoryOptions: (options) => {
-
+        let tagPath = options.tag;
+        let encryptedFilePath = options.file;
+        let publicKeyPath = options.public;
+        if (!tagPath) {
+            console.error('--tag option not provided.'); process.exit(1);
+        }
+        if (!encryptedFilePath) {
+            console.error('--file option not provided.'); process.exit(1);
+        }
+        if (!publicKeyPath) {
+            console.error('--public option not provided.'); process.exit(1);
+        }
     }
 }
 ;

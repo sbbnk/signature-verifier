@@ -1,0 +1,16 @@
+{
+  "algorithm": "aes-256-ctr",
+  "iv": "2b9d347c043364a2196e0d9b87e74222",
+  "secret": "b8447311c62e8f225c5a21a977fbfb3257558f091196c45d943c433d12f8293b",
+  "ipfs": "QmTNwAB3ounEtuUjTQ7AkQYG5mHzuyu58fkWjddgUfbjNz",
+  "metadata": {
+    "mimeType": "image/jpeg",
+    "originalName": "CoceBadger.jpg",
+    "filename": "75666b4717772105de13b5466064d307"
+  },
+  "signature": {
+    "v": 0,
+    "r": "fd864e14122bc0ff9f4e6d879a89c9262f8be3ae9ad77fdc2239a66c19e369b2",
+    "s": "85803047849782bb224188381bfb269a00ed3aea526fdb028ff5ddf02d4a8c6d"
+  }
+}
