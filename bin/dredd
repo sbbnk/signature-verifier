@@ -12,7 +12,8 @@ const
     fs = require('fs'),
     async = require('async'),
     path = require('path'),
-    cryptoTool = require('../src/cryptoTool');
+    cryptoTool = require('../src/cryptoTool'),
+    output = require('../src/output');
 
 const
     optionDefinitions = cliOptions.definitions,
