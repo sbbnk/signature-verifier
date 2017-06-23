@@ -8,36 +8,44 @@ module.exports = {
             name: 'tag',
             type: String,
             alias: 't',
-            typeLabel: '[underline]{path}',
+            typeLabel: '[underline]{<path>}',
             description: 'Path to a tag file.'
         },
         {
             name: 'public',
             type: String,
             alias: 'p',
-            typeLabel: '[underline]{path}',
-            description: 'Provided public key.'.red
+            typeLabel: '[underline]{<path>}',
+            description: 'Provided public key.'
         },
         {
             name: 'file',
             type: String,
             alias: 'f',
-            typeLabel: '[underline]{path}',
-            description: 'Signed file'
+            typeLabel: '[underline]{<path>}',
+            description: 'Encrypted file.'
         },
         {
             name: 'output',
             type: String,
             alias: 'o',
             defaultValue: '/tmp/decrypted.file',
-            typeLabel: '[underline]{path}',
-            description: 'Signed file'
+            typeLabel: '[underline]{[path]}',
+            description: 'Path to decrypted file. Default: /tmp/decrypted.file'
+        },
+        {
+            name: 'ipfs',
+            type: String,
+            alias: 'i',
+            defaultValue: '/ip4/127.0.0.1/tcp/5001',
+            typeLabel: '[underline]{[multiaddress]}',
+            description: 'IPFS API multiadress. Default: /ip4/127.0.0.1/tcp/5001'
         },
         {
             name: 'version',
             alias: 'v',
             type: Boolean,
-            description: 'Truth scanner version.'
+            description: 'Application version.'
         },
         {
             name: 'help',

@@ -5,7 +5,6 @@
 'use strict';
 require('colors');
 
-
 const
     commandLineArgs = require('command-line-args'),
     cliOptions = require('../src/cli-options'),
@@ -38,6 +37,7 @@ let tagPath = path.resolve(options.tag);
 let encryptedFilePath = path.resolve(options.file);
 let publicKeyPath = path.resolve(options.public);
 let decryptedOutput = path.resolve(options.output);
+let ipfsApi = options.api;
 
 console.log(`Tag path ${tagPath}`);
 console.log(`Encrypted file path ${encryptedFilePath}`);
@@ -56,8 +56,8 @@ async.series(
         let secKeyBuf = Buffer.from(tag.secret, 'hex');
         let decryptOptions = {algorithm: tag.algorithm, iv:  Buffer.from(tag.iv, 'hex')};
 
-        console.log(`Tag:\n${JSON.stringify(tag, null, 2)}`);
-        console.log(`Public key: [${publicKeyHex}]`);
+        console.log('\nTag:'.bold + `${JSON.stringify(tag, null, 2)}`);
+        console.log('\nPublic key:'.bold + ` [${publicKeyHex}]`);
 
         let encryptedStream = fs.createReadStream(encryptedFilePath);
         let encryptedStreamHashing = fs.createReadStream(encryptedFilePath);
@@ -65,16 +65,26 @@ async.series(
         async.series([
             callback => cryptoTool.verifyByTag(tag, publicKeyHex, callback),
             callback => cryptoTool.decryptStream(encryptedStream, decryptedStream, secKeyBuf, decryptOptions, callback),
-            callback => cryptoTool.dagHash(encryptedStreamHashing, '/ip4/127.0.0.1/tcp/5001', callback)
+            callback => cryptoTool.dagHash(encryptedStreamHashing, ipfsApi, callback)
         ], (error, results) => {
             let verificationResult = results[0];
             let decryptMsg = results[1];
             let derivedQmHash = results[2][0].hash;
 
-            console.log(`Signature verification result: ${verificationResult ? '[VALID]' : '[INVALID]'}`);
+            console.log('\n=======================================================================');
+            console.log('\n#1 Validate signature...'.bold);
+            console.log(`Signature verification result: ${verificationResult ? '[VALID]'.green : '[INVALID]'.red}`);
+
+            console.log('\n#2 Decrypt file...'.bold);
             console.log(`Decrypted file location: ${decryptedOutput}`);
-            console.log(`Derived digest in multihash format:\t${derivedQmHash}`);
+
+            console.log('\n#3 Check file digest...'.bold);
             console.log(`Tag digest in multihash format:\t\t${tag.ipfs}`);
+            console.log(
+                `Calculated digest in multihash format:\t${derivedQmHash} ` +
+                (derivedQmHash === tag.ipfs ? '[Digest are equals]'.green : '[Digest are not equals]'.red)
+            );
+
         });
     });
 
