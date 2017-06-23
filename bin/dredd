@@ -51,16 +51,20 @@ async.series(
         if (error) { console.log(error); process.exit(1)}
         let tag = JSON.parse(result[0].toString());
         let publicKeyHex = result[1].toString();
+        let secKeyBuf = Buffer.from(tag.secret, 'hex');
+        let decryptOptions = {algorithm: tag.algorithm, iv:  Buffer.from(tag.iv, 'hex')};
 
         console.log(`Tag:\n${JSON.stringify(tag, null, 2)}`);
         console.log(`Public key: [${publicKeyHex}]`)
 
         var encryptedStream = fs.createReadStream(encryptedFilePath);
         let decryptedStream = fs.createWriteStream('/tmp/dec.jpeg');
-        cryptoTool.decryptStream(
-            encryptedStream, decryptedStream,
-            Buffer.from(tag.secret, 'hex'), {algorithm: tag.algorithm, iv:  Buffer.from(tag.iv, 'hex')}, () => {
-            console.log('Done');
+        async.series([
+            (callback) => cryptoTool.verifyByTag(tag, publicKeyHex, callback),
+            (callback) =>  cryptoTool.decryptStream(encryptedStream, decryptedStream, secKeyBuf, decryptOptions, callback)
+        ], (error, results) => {
+            let verificationResult = results[0];
+            let decryptMsg = results[1];
         });
 
     });

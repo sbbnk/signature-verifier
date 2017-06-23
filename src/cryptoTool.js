@@ -4,6 +4,7 @@
 
 const crypto = require('crypto');
 const multihash = require('multihashes');
+const BN = require('bn.js');
 
 const EC = require('elliptic').ec;
 const ELLIPTIC_CURVE = 'secp256k1';
@@ -28,34 +29,40 @@ class Crypto {
     }
 
     decryptStream(sourceStream, destinationStream, secretKey, options = {}, callback) {
-        const decipherIv = this.createDecipher(secretKey, options);
-        sourceStream.pipe(decipherIv.decipher).pipe(destinationStream);
-        destinationStream.on('finish', () => {
-            if (callback) {
-                callback()
-            }
-        });
+        try {
+            const decipherIv = this.createDecipher(secretKey, options);
+            sourceStream.pipe(decipherIv.decipher).pipe(destinationStream);
+            destinationStream.on('finish', () => callback(null, 'finish'));
+            destinationStream.on('error', e => callback(e, null))
+        } catch (e) {
+            callback(e, null)
+        }
     }
 
+    /**
+     *
+     * @param tag - full tag json object (not string!).
+     * @param providedPublicKey key format is 0x04.....
+     * @param callback
+     */
     verifyByTag(tag, providedPublicKey, callback) {
-        return new Promise((resolve, reject) => {
-            try {
-                let signature = {
-                    r: new BN(tag.signature.r, 16),
-                    s: new BN(tag.signature.s, 16),
-                    recoveryParam: tag.signature.v
-                };
-                let hashArray = buf2arr(multihash.fromB58String(tag.ipfs));
-                let truncatedQmHash = hashArray.slice(2);
+        try {
+            let keyBuffer = Buffer.from(providedPublicKey.slice(2), 'hex').toJSON().data;
+            let signature = {
+                r: new BN(tag.signature.r, 16),
+                s: new BN(tag.signature.s, 16),
+                recoveryParam: tag.signature.v
+            };
+            let hashArray = buf2arr(multihash.fromB58String(tag.ipfs));
+            let truncatedQmHash = hashArray.slice(2);
 
-                let signatureValidation = this.verify(signature, truncatedQmHash, providedPublicKey);
+            let signatureValidation = this.verify(signature, truncatedQmHash, keyBuffer);
 
-                callback(null, signatureValidation);
+            callback(null, signatureValidation);
 
-            } catch (e) {
-                callback(e, null);
-            }
-        })
+        } catch (e) {
+            callback(e, null);
+        }
     }
 
     verify(signature, message, pub) {
