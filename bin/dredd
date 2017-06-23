@@ -13,7 +13,8 @@ const
     async = require('async'),
     path = require('path'),
     cryptoTool = require('../src/cryptoTool'),
-    output = require('../src/output');
+    output = require('../src/output'),
+    multihash = require('multihashes');
 
 const
     optionDefinitions = cliOptions.definitions,
@@ -36,6 +37,7 @@ cliOptions.checkMandatoryOptions(options);
 let tagPath = path.resolve(options.tag);
 let encryptedFilePath = path.resolve(options.file);
 let publicKeyPath = path.resolve(options.public);
+let decryptedOutput = path.resolve(options.output);
 
 console.log(`Tag path ${tagPath}`);
 console.log(`Encrypted file path ${encryptedFilePath}`);
@@ -44,8 +46,8 @@ console.log(`Public key path ${publicKeyPath}`);
 
 async.series(
     [
-        (callback) => fs.readFile(tagPath, callback),
-        (callback) => fs.readFile(publicKeyPath, callback)
+        callback => fs.readFile(tagPath, callback),
+        callback => fs.readFile(publicKeyPath, callback)
     ],
     (error, result) => {
         if (error) { console.log(error); process.exit(1)}
@@ -55,17 +57,24 @@ async.series(
         let decryptOptions = {algorithm: tag.algorithm, iv:  Buffer.from(tag.iv, 'hex')};
 
         console.log(`Tag:\n${JSON.stringify(tag, null, 2)}`);
-        console.log(`Public key: [${publicKeyHex}]`)
+        console.log(`Public key: [${publicKeyHex}]`);
 
-        var encryptedStream = fs.createReadStream(encryptedFilePath);
-        let decryptedStream = fs.createWriteStream('/tmp/dec.jpeg');
+        let encryptedStream = fs.createReadStream(encryptedFilePath);
+        let encryptedStreamHashing = fs.createReadStream(encryptedFilePath);
+        let decryptedStream = fs.createWriteStream(decryptedOutput);
         async.series([
-            (callback) => cryptoTool.verifyByTag(tag, publicKeyHex, callback),
-            (callback) =>  cryptoTool.decryptStream(encryptedStream, decryptedStream, secKeyBuf, decryptOptions, callback)
+            callback => cryptoTool.verifyByTag(tag, publicKeyHex, callback),
+            callback => cryptoTool.decryptStream(encryptedStream, decryptedStream, secKeyBuf, decryptOptions, callback),
+            callback => cryptoTool.dagHash(encryptedStreamHashing, '/ip4/127.0.0.1/tcp/5001', callback)
         ], (error, results) => {
             let verificationResult = results[0];
             let decryptMsg = results[1];
-        });
+            let derivedQmHash = results[2][0].hash;
 
+            console.log(`Signature verification result: ${verificationResult ? '[VALID]' : '[INVALID]'}`);
+            console.log(`Decrypted file location: ${decryptedOutput}`);
+            console.log(`Derived digest in multihash format:\t${derivedQmHash}`);
+            console.log(`Tag digest in multihash format:\t\t${tag.ipfs}`);
+        });
     });
 

@@ -10,13 +10,17 @@ const EC = require('elliptic').ec;
 const ELLIPTIC_CURVE = 'secp256k1';
 const ec = new EC(ELLIPTIC_CURVE);
 
+const ipfs = require('ipfs-api');
+
+
 const buf2arr = (buf) => {
     return Buffer.isBuffer(buf) ? buf.toJSON().data : buf;
 };
 
 class Crypto {
 
-    constructor() { }
+    constructor() {
+    }
 
     createDecipher(secretKey, options) {
         const algorithm = options.algorithm;
@@ -68,6 +72,27 @@ class Crypto {
     verify(signature, message, pub) {
         const key = ec.keyFromPublic(pub);
         return key.verify(message, signature);
+    }
+
+    /**
+     * SHA256 from input stream.
+     * @param stream
+     * @param callback - returns {error, Array}
+     */
+    sha256(stream, callback) {
+        let hash = crypto.createHash('sha256');
+        stream.on('error', err => callback(err, null));
+        stream.on('data', chunk => hash.update(chunk));
+        stream.on('end', () => callback(null, hash.digest('hex')));
+    }
+
+    dagHash(stream, ipfsApi, callback) {
+        let ipfsInst = ipfs(ipfsApi);
+        let files = [{
+            path: 'streamed',
+            content: stream
+        }];
+        ipfsInst.files.add(files, callback);
     }
 }
 

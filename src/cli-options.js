@@ -26,6 +26,14 @@ module.exports = {
             description: 'Signed file'
         },
         {
+            name: 'output',
+            type: String,
+            alias: 'o',
+            defaultValue: '/tmp/decrypted.file',
+            typeLabel: '[underline]{path}',
+            description: 'Signed file'
+        },
+        {
             name: 'version',
             alias: 'v',
             type: Boolean,
